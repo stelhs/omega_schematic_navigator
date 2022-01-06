@@ -1,0 +1,177 @@
+body
+{
+    padding : 0;
+    margin : 0;
+    background-color: black;
+    color: #AAAAAA;
+    font-family: "Bitstream Vera Sans","Lucida Sans Unicode","Lucida Grande",Arial;
+}
+
+*
+{
+	font-size: 18px;
+    //border: solid 1px;
+}
+
+h1
+{
+    font-size: 46px;
+    font-weight:normal;
+    text-align: center;
+}
+
+h2
+{
+    font-size: 42px;
+    font-weight: bold;
+    text-align: center;
+}
+
+table, tbody
+{
+    padding:0;
+    margin:0;
+    border-collapse:separate;
+    border-spacing:0;
+    empty-cells:show;
+    table-layout:auto;
+}
+
+td
+{
+    padding : 10;
+    text-align : left;
+    vertical-align : top;
+}
+
+a:link, a:visited
+{
+    color:#AAAAAA;
+    text-decoration:none;
+}
+
+a:active, a:hover
+{
+    color:#FFFFFF;
+}
+
+form
+{
+    margin: 15px;
+    padding:0;
+    clear: both;
+}
+
+form input, textarea {
+    background-color: black;
+    color: #AAAAAA;
+    border: 1px solid #AAAAAA;
+}
+
+img
+{
+    border:0;
+}
+
+ul
+{
+    padding:0;
+}
+
+
+#header {
+	height: 100px;
+	margin: 10px auto;
+}
+
+/*
+.s_button_black a:active, a:link, a:visited
+{
+    color:#aaaaaa;
+    border: solid 1px #aaaaaa;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin: 5px;
+}
+
+.s_button_black a:hover{
+  color: #ffffff;
+    text-decoration:none;
+    border: solid 1px #ffffff;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin: 5px;
+}
+*/
+
+img {
+  //  padding: 10px;
+}
+
+.location_photo {
+    overflow: hidden;
+    width:1000px;
+    height: 600px;
+    border: solid 2px gray;
+    text-align: center;
+    position: relative;
+}
+
+.location_photo img {
+    padding: 0px;
+}
+
+.location_remove_img {
+    position: absolute;
+    left: 900px;
+    top: 27px;
+}
+
+
+
+.obj_photo_node {
+    overflow: hidden;
+    width:300px;
+    height: 200px;
+    border: solid 2px gray;
+    text-align: center;
+    position: relative;
+}
+
+.obj_photo_node img {
+    padding: 0px;
+}
+
+
+.obj_photo {
+    overflow: hidden;
+    width: 1000px;
+    height: 580px;
+    border: solid 2px gray;
+    text-align: center;
+    position: relative;
+}
+
+.obj_photo img {
+    padding: 0px;
+}
+
+.obj_remove_img {
+    position: absolute;
+    left: 900px;
+    top: 27px;
+}
+
+.obj_select_img {
+    position: absolute;
+    left: 900px;
+    top: 27px;
+}
+
+.img_button {
+    padding: 20px;
+}
+
+.img_button_del_mini {
+    padding-left: 20px;
+}

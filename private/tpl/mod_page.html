@@ -1,0 +1,103 @@
+<script src="{http_js}mod_page.js?{time}"></script>
+
+<div align="left">
+    <!-- START BLOCK : page_found -->
+        <table>
+            <tr>
+                <td>
+                    Ревизия: {rev}<br>
+                    Страница: {page_id}<br>
+                    Индекс: {index_start} - {index_end}
+                </td>
+                <td>
+                    <a href="javascript:;" onclick="">
+                        <img class="img_button" src="{http_img}edit.png">
+                    </a>
+                    <a href="javascript:editor.save()" onclick="">
+                        <img class="img_button" src="{http_img}save.png">
+                    </a>
+                    <a href="javascript:;" onclick="">
+                        <img class="img_button" src="{http_img}cancel.png">
+                    </a>
+                    <a href="javascript:;" onclick="">
+                        <img class="img_button" src="{http_img}reload.png">
+                    </a>
+                    <a href="javascript:editor.indexLineSwitch()" onclick="">
+                        <img class="img_button" src="{http_img}grid.png">
+                    </a>
+                </td>
+            </tr>
+        </table>
+    <!-- END BLOCK : page_found -->
+
+    <!-- START BLOCK : not_found -->
+        Индекс {cn} не найден
+    <!-- END BLOCK : not_found -->
+
+    <!-- START BLOCK : prev_page -->
+        <a href="{link}" title="предыдущая страница">
+            <img class="img_button" src="{http_img}arrow_left.png">
+        </a>
+    <!-- END BLOCK : prev_page -->
+
+    <!-- START BLOCK : next_page -->
+        <a href="{link}" onclick="" title="следующая страница">
+            <img class="img_button" src="{http_img}arrow_right.png">
+        </a>
+    <!-- END BLOCK : next_page -->
+
+
+    <!-- START BLOCK : schematic_image -->
+        <div id="mainDiv" style="text-align: left">
+            <div onclick="location.href='http://ya.ru';" style="cursor: pointer; border: solid 2px red; position:relative; width:50; height:25; top:150; left:200;" title="bla"></div>
+
+            <input id="editBox" size="4" type="text" style="position: absolute; display: none">
+
+            <div id="messageBox" style="border: solid 2px red;
+                                     position: absolute;
+                                     height: 25;
+                                     color: black;
+                                     width: max-content;
+                                     padding-left: 10;
+                                     padding-right: 10;
+                                     display: none;"></div>
+
+            <img id="schImg"
+                 style="width: {def_width}; height: {def_height}"
+                 src="{http_img}pages/{sch_img}">
+
+            <script>
+                $(document).ready(function () {
+                    editor = new Editor({id},
+                                        {original_width}, {original_height},
+                                        {index_start}, {index_end},
+                                        {offset}, {step},
+                                        $$('mainDiv'), $$("schImg"),
+                                        $$('editBox'), $$('messageBox'));
+
+                    $("#schImg").on("click", function (event) {
+                        p = new Point(event.pageX - this.offsetLeft, event.pageY - this.offsetTop)
+                        editor.onClick(p.fromScaled(editor.scale));
+                    });
+
+                    $("#schImg").on("mousemove", function (event) {
+                        p = new Point(event.pageX - this.offsetLeft, event.pageY - this.offsetTop)
+                        schP = p.fromScaled(editor.scale);
+                        editor.onMouseMove(schP);
+                        $('#img_coordinate').html("X Coordinate: " + schP.x +
+                                                  "<br/> Y Coordinate: " + schP.y);
+                    });
+
+                document.addEventListener("keypress", function onEvent(event) {
+                    editor.keyPress(event.key);
+                });
+
+                });
+            </script>
+
+        <p id="img_coordinate" style="height: 50px"></p>
+
+        </div>
+    <!-- END BLOCK : schematic_image -->
+
+</div>

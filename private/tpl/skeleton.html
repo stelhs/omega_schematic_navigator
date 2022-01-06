@@ -1,0 +1,60 @@
+/*  Cкелет страницы сайта */
+<html>
+    <head>
+        <meta content="text/html; charset=utf-8" http-equiv="content-type">
+        <link rel="stylesheet" type="text/css" href="{http_css}common.css?t={time}">
+        <link rel="stylesheet" href="{http_css}jquery-ui.css">
+        <script> query_url = "{query_url}"; </script>
+        <script src="{http_js}jquery.min.js"></script>
+        <script src="{http_js}strontium_tpl.js"></script>
+        <script src="{http_js}common.js"></script>
+        <script src="{http_js}project.js?{time}"></script>
+        <title>{title}</title>
+        <meta name="viewport" content="user-scalable=no">
+    </head>
+
+    <body>
+        <!-- START BLOCK : user_logout -->
+            <a href="{link_logout}"> Выход </a> |
+        <!-- END BLOCK : user_logout -->
+        <a href="{link_pages}" style="color: orange"> Схемы </a> |
+        <hr>
+
+        <!-- START INSERT : message_boxes.html --> <!-- END INSERT : message_boxes.html -->
+
+
+        <!-- START BLOCK : user_auth -->
+            <div align="center">
+                 <h3>Авторизация</h3>
+                    <div id="login_form">
+                        <form name="form4" method="POST" action="query.php">
+                        <input type="hidden" name="method" value="user_auth">
+
+                            <table border="0" cellspacing="5" cellpadding="5">
+                                <tr>
+                                    <td align="right" valign="top">Логин</td>
+                                    <td> <input type="text" name="login" size="20"></td>
+                                </tr>
+                                <tr>
+                                    <td align="right" valign="top">Пароль</td>
+                                    <td> <input type="password" name="pass" size="20"></td>
+                                </tr>
+                                <tr>
+                                    <td align="center" colspan="2">
+                                        <div class="s_button_black">
+                                            <a href="javascript:;" onclick="form4.submit();" class="s_button_black">Войти</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </form>
+                   </div>
+            </div>
+        <!-- END BLOCK : user_auth -->
+
+        <!-- START BLOCK : module_content -->
+            {content}
+        <!-- END BLOCK : module_content -->
+
+    </body>
+</html>

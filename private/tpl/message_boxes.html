@@ -1,0 +1,27 @@
+/* Шаблон всплывающих сообщения */
+
+
+
+<!-- START BLOCK : message_auth_error -->
+    <!-- START INSERT : message_box.html -->
+        <color>red</color>
+        <header>Error</header>
+        <message>Wrong login or password</message>
+    <!-- END INSERT : message_box.html -->
+<!-- END BLOCK : message_auth_error -->
+
+<!-- START BLOCK : message_error -->
+    <!-- START INSERT : message_box.html -->
+        <color>red</color>
+        <header>Error</header>
+        <message>{reason}</message>
+    <!-- END INSERT : message_box.html -->
+<!-- END BLOCK : message_error -->
+
+<!-- START BLOCK : message_success -->
+    <!-- START INSERT : message_box.html -->
+        <color>green</color>
+        <header>Success</header>
+        <message>{reason}</message>
+    <!-- END INSERT : message_box.html -->
+<!-- END BLOCK : message_success -->
