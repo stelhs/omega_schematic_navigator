@@ -108,65 +108,20 @@ img {
   //  padding: 10px;
 }
 
-.location_photo {
-    overflow: hidden;
-    width:1000px;
-    height: 600px;
-    border: solid 2px gray;
-    text-align: center;
-    position: relative;
+.index_blinking {
+    animation-name: index_blinking;
+    animation-duration: 1s;
+    animation-iteration-count: 100;
+    background-color: rgba(255, 255, 0, 0.2);
 }
 
-.location_photo img {
-    padding: 0px;
-}
-
-.location_remove_img {
-    position: absolute;
-    left: 900px;
-    top: 27px;
+@keyframes index_blinking
+{
+   50% { border-color: red; }
 }
 
 
 
-.obj_photo_node {
-    overflow: hidden;
-    width:300px;
-    height: 200px;
-    border: solid 2px gray;
-    text-align: center;
-    position: relative;
-}
-
-.obj_photo_node img {
-    padding: 0px;
-}
-
-
-.obj_photo {
-    overflow: hidden;
-    width: 1000px;
-    height: 580px;
-    border: solid 2px gray;
-    text-align: center;
-    position: relative;
-}
-
-.obj_photo img {
-    padding: 0px;
-}
-
-.obj_remove_img {
-    position: absolute;
-    left: 900px;
-    top: 27px;
-}
-
-.obj_select_img {
-    position: absolute;
-    left: 900px;
-    top: 27px;
-}
 
 .img_button {
     padding: 20px;

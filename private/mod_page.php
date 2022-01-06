@@ -9,9 +9,11 @@ class Mod_page extends Module {
         $tpl = tpl("mod_page.html");
         $tpl->assign();
 
-        $id = isset($args['id']) ? $args['id'] : 0;
-        $idx = isset($args['idx']) ? $args['idx'] : 100;
+        $id = isset($args['id']) ? $args['id'] : 1;
+        $idx = isset($args['idx']) ? $args['idx'] : 0;
+        $fromIdx = isset($args['from']) ? $args['from'] : NULL;
         $rev = isset($args['rev']) ? $args['rev'] : 'first';
+        $mode = isset($args['mode']) ? $args['mode'] : 'navigator';
 
         if ($id)
             $page = page_by_id($id);
@@ -43,17 +45,42 @@ class Mod_page extends Module {
 
         $def_width = 1800;
         $def_height = $page->height * ($def_width / $page->width);
-        $tpl->assign('schematic_image',
-                     ['sch_img' => $page->filename,
-                      'id' => $page->id,
-                      'original_width' => $page->width,
-                      'original_height' => $page->height,
-                      'def_width' => $def_width,
-                      'def_height' => $def_height,
-                      'index_start' => $page->idx_start,
-                      'index_end' => $page->idx_end,
-                      'offset' => $page->offset,
-                      'step' => $page->step]);
+
+        $schInfo = ['sch_img' => $page->filename,
+                    'id' => $page->id,
+                    'original_width' => $page->width,
+                    'original_height' => $page->height,
+                    'def_width' => $def_width,
+                    'def_height' => $def_height,
+                    'index_start' => $page->idx_start,
+                    'index_end' => $page->idx_end,
+                    'offset' => $page->offset,
+                    'step' => $page->step];
+
+        switch ($mode) {
+        case 'editor':
+            $link_cancel = mk_link(['mod' => 'page',
+                                    'mode' => 'navigator',
+                                    'id' => $id]);
+            $tpl->assign("editor_buttons", ['link_cancel' => $link_cancel]);
+            $tpl->assign('editor', $schInfo);
+            break;
+
+        case 'navigator':
+            $link = mk_link(['mod' => 'page',
+                             'mode' => 'editor',
+                             'id' => $id]);
+            $tpl->assign("button_edit", ['link' => $link]);
+            $tpl->assign('navigator', $schInfo);
+
+            if ($fromIdx)
+                $tpl->assign("show_link_point_selector", ['from_index' => $fromIdx]);
+            else  if ($idx)
+                $tpl->assign("show_index_selector", ['index' => $idx]);
+            break;
+        }
+
+
         return $tpl->result();
     }
 
@@ -127,7 +154,17 @@ class Mod_page extends Module {
 
         $lp_list = [];
         foreach ($ret[1] as $lp) {
-            $lp_list[] = $lp->serialize_as_arr();
+            $lps = $lp->serialize_as_arr();
+            $lps['link'] = "";
+
+            $p = page_by_index($page->rev, $lp->to);
+            if ($p)
+                $lps['link'] = mk_link(['mod' => 'page',
+                                        'mode' => 'navigator',
+                                        'id' => $p->id,
+                                        'idx' => $lp->to,
+                                        'from' => $lp->from]);
+            $lp_list[] = $lps;
         }
 
         $ret = $page->items();

@@ -10,21 +10,31 @@
                     Индекс: {index_start} - {index_end}
                 </td>
                 <td>
-                    <a href="javascript:;" onclick="">
-                        <img class="img_button" src="{http_img}edit.png">
-                    </a>
-                    <a href="javascript:editor.save()" onclick="">
-                        <img class="img_button" src="{http_img}save.png">
-                    </a>
-                    <a href="javascript:;" onclick="">
-                        <img class="img_button" src="{http_img}cancel.png">
-                    </a>
-                    <a href="javascript:;" onclick="">
-                        <img class="img_button" src="{http_img}reload.png">
-                    </a>
-                    <a href="javascript:editor.indexLineSwitch()" onclick="">
-                        <img class="img_button" src="{http_img}grid.png">
-                    </a>
+                    <!-- START BLOCK : button_edit -->
+                        <a href="{link}" onclick="">
+                            <img class="img_button" src="{http_img}edit.png">
+                        </a>
+                    <!-- END BLOCK : button_edit -->
+
+                    <!-- START BLOCK : editor_buttons -->
+                        <a href="javascript:editor.save()" onclick="">
+                            <img class="img_button" src="{http_img}save.png">
+                        </a>
+                        <a href="{link_cancel}" onclick="">
+                            <img class="img_button" src="{http_img}cancel.png">
+                        </a>
+                        <a href="javascript:editor.indexLineSwitch()" onclick="">
+                            <img class="img_button" src="{http_img}grid.png">
+                        </a>
+                        <div id="messageBox" style="border: solid 2px red;
+                                                    height: 25;
+                                                    color: yellow;
+                                                    width: max-content;
+                                                    padding-left: 10;
+                                                    padding-right: 10;
+                                                    display: none;"></div>
+
+                    <!-- END BLOCK : editor_buttons -->
                 </td>
             </tr>
         </table>
@@ -47,20 +57,49 @@
     <!-- END BLOCK : next_page -->
 
 
-    <!-- START BLOCK : schematic_image -->
-        <div id="mainDiv" style="text-align: left">
-            <div onclick="location.href='http://ya.ru';" style="cursor: pointer; border: solid 2px red; position:relative; width:50; height:25; top:150; left:200;" title="bla"></div>
+    <div id="mainDiv" style="text-align: left">
+        <!-- START BLOCK : navigator -->
+            <img id="schImg"
+                 style="width: {def_width}; height: {def_height}"
+                 src="{http_img}pages/{sch_img}">
 
+            <script>
+                $(document).ready(function () {
+                    nav = new Navigator({id},
+                                        {original_width}, {original_height},
+                                        {index_start}, {index_end},
+                                        {offset}, {step},
+                                        $$('mainDiv'), $$("schImg"));
+
+                    $("#schImg").on("click", function (event) {
+                        p = new Point(event.pageX - this.offsetLeft, event.pageY - this.offsetTop)
+                        nav.onClick(p.fromScaled(nav.scale));
+                    });
+
+                    $("#schImg").on("mousemove", function (event) {
+                        p = new Point(event.pageX - this.offsetLeft, event.pageY - this.offsetTop)
+                        schP = p.fromScaled(nav.scale);
+                        nav.onMouseMove(schP);
+                    });
+
+                    document.addEventListener("keypress", function onEvent(event) {
+                        nav.keyPress(event.key);
+                    });
+
+                    <!-- START BLOCK : show_index_selector -->
+                        nav.showIndexSelector({index});
+                    <!-- END BLOCK : show_index_selector -->
+
+                    <!-- START BLOCK : show_link_point_selector -->
+                        nav.setHighlightLinkPoint({from_index});
+                    <!-- END BLOCK : show_link_point_selector -->
+                });
+            </script>
+        <!-- END BLOCK : navigator -->
+
+
+        <!-- START BLOCK : editor -->
             <input id="editBox" size="4" type="text" style="position: absolute; display: none">
-
-            <div id="messageBox" style="border: solid 2px red;
-                                     position: absolute;
-                                     height: 25;
-                                     color: black;
-                                     width: max-content;
-                                     padding-left: 10;
-                                     padding-right: 10;
-                                     display: none;"></div>
 
             <img id="schImg"
                  style="width: {def_width}; height: {def_height}"
@@ -88,16 +127,13 @@
                                                   "<br/> Y Coordinate: " + schP.y);
                     });
 
-                document.addEventListener("keypress", function onEvent(event) {
-                    editor.keyPress(event.key);
-                });
-
+                    document.addEventListener("keypress", function onEvent(event) {
+                        editor.keyPress(event.key);
+                    });
                 });
             </script>
 
-        <p id="img_coordinate" style="height: 50px"></p>
-
-        </div>
-    <!-- END BLOCK : schematic_image -->
-
+            <p id="img_coordinate" style="height: 50px"></p>
+        <!-- END BLOCK : editor -->
+    </div>
 </div>

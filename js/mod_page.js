@@ -1,7 +1,7 @@
 class Point {
     constructor(x, y) {
-        this.x = x;
-        this.y = y;
+        this.x = parseInt(x);
+        this.y = parseInt(y);
     }
 
     toScaled(scale) {
@@ -12,6 +12,16 @@ class Point {
     fromScaled(scale) {
         return new Point(Math.round(this.x / scale),
                          Math.round(this.y / scale));
+    }
+
+    minus(point) {
+        return new Point(this.x - point.x,
+                         this.y - point.y);
+    }
+
+    plus(point) {
+        return new Point(this.x + point.x,
+                         this.y + point.y);
     }
 }
 
@@ -87,6 +97,10 @@ class GraphicObject {
         this.type = type;
         this.div = document.createElement("div");
         this.div.style.display = "none";
+        this.borderType = "solid";
+        this.borderWidth = 3;
+        this.color = "blue";
+        this.updateBorder();
         editor.mainDiv.insertBefore(this.div, editor.schImg);
     }
 
@@ -102,8 +116,37 @@ class GraphicObject {
         this.div.onmousemove = cb;
     }
 
-    setBorder(border) {
+    updateBorder() {
+        var border = this.borderType + ' ' +
+                     this.borderWidth +
+                     'px ' + this.color;
         this.div.style.border = border;
+    }
+
+    setClass(cssClass) {
+        this.div.className = cssClass;
+    }
+
+    setColor(color) {
+        this.color = color;
+        this.updateBorder();
+        this.update();
+    }
+
+    setBorderWidth(width) {
+        this.borderWidth = width;
+        this.updateBorder();
+        this.update();
+    }
+
+    setBorderType(type) {
+        this.borderType = type;
+        this.updateBorder();
+        this.update();
+    }
+
+    setMouseCursor(cursor) {
+        this.div.style.cursor = cursor;
     }
 
     destroy() {
@@ -115,8 +158,6 @@ class GraphicObjectRect extends GraphicObject {
     constructor(editor, rect) {
         super(editor, 'rect');
         this.setRect(rect)
-
-        this.div.style.border = "solid 3px blue";
         this.div.style.position = "absolute";
         this.div.style.display = "block";
     }
@@ -124,10 +165,10 @@ class GraphicObjectRect extends GraphicObject {
     setRect(rect) {
         this.rect = rect;
         var s = this.editor.scale;
-        this.div.style.left = this.editor.left() + rect.toScaled(s).left() - 3;
-        this.div.style.top = this.editor.top() + rect.toScaled(s).top() - 3;
-        this.div.style.width = rect.toScaled(s).width() - 3;
-        this.div.style.height = rect.toScaled(s).height() - 3;
+        this.div.style.left = this.editor.left() + rect.toScaled(s).left();
+        this.div.style.top = this.editor.top() + rect.toScaled(s).top();
+        this.div.style.width = rect.toScaled(s).width() - this.borderWidth * 2;
+        this.div.style.height = rect.toScaled(s).height() - this.borderWidth * 2;
     }
 
     update() {
@@ -144,8 +185,6 @@ class GraphicObjectPoint extends GraphicObject {
     constructor(editor, point) {
         super(editor, 'point');
         this.setPoint(point);
-
-        this.div.style.border = "solid 3px blue";
         this.div.style.position = "absolute";
         this.div.style.display = "block";
     }
@@ -153,8 +192,10 @@ class GraphicObjectPoint extends GraphicObject {
     setPoint(point) {
         this.point = point;
         var s = this.editor.scale;
-        this.div.style.left = this.editor.left() + point.toScaled(s).x - 3;
-        this.div.style.top = this.editor.top() + point.toScaled(s).y - 3;
+        this.div.style.left = this.editor.left() +
+                              point.toScaled(s).x - this.borderWidth;
+        this.div.style.top = this.editor.top() +
+                              point.toScaled(s).y - this.borderWidth;
         this.div.style.width = 0;
         this.div.style.height = 0;
     }
@@ -188,29 +229,19 @@ class Area {
     }
 
     onDblClick() {
-        var idxInfo = NaN;
-
-        if (idxInfo) {
-            var [startIdxOffset, idxStep] = idxInfo;
-            this.editor.indexLineSet(startIdxOffset, idxStep);
-            this.editor.indexLineShow();
-        }
-
-
         var p = this.graphRect.rect.bottomRight();
-        this.editor.editBoxShow(p.toScaled(this.editor.scale),
-                                function (name) {},
-                                function () {},
-                                this.name);
+        this.editor.editBoxShow(p, function (name) {},
+                                   function () {},
+                                   this.name);
     }
 
     select() {
-        this.graphRect.setBorder("solid 3px red");
+        this.graphRect.setColor("red");
         this.selected = true;
     }
 
     unselect() {
-        this.graphRect.setBorder("solid 3px blue");
+        this.graphRect.setColor("blue");
         this.selected = false;
     }
 
@@ -231,8 +262,10 @@ class Area {
 }
 
 class IndexLine {
-    constructor(editor) {
+    constructor(editor, startIdx, endIdx) {
         this.editor = editor;
+        this.startIdx = startIdx;
+        this.endIdx = endIdx;
         this.offset = NaN;
         this.step = NaN;
         this.grid = [];
@@ -250,7 +283,7 @@ class IndexLine {
         var areaRight = rect.right();
 
         this.step = (areaRight - areaLeft) / (areaEnd - areaStart);
-        this.offset = areaLeft - (areaStart - this.editor.startIdx) * this.step;
+        this.offset = areaLeft - (areaStart - this.startIdx) * this.step;
         return true;
     }
 
@@ -259,21 +292,29 @@ class IndexLine {
         this.step = step;
     }
 
+    offsetByIndex(idx) {
+        if (idx < this.startIdx)
+            return NaN;
+
+        if (idx > this.endIdx)
+            return NaN;
+
+        var cnt = idx - this.startIdx;
+        return this.offset + cnt * this.step;
+    }
+
     show() {
         if (!this.step)
             return;
 
-        var startIdx = this.editor.startIdx;
-        var endIdx = this.editor.endIdx;
-
-        var cnt = 0
-        for (var i = startIdx; i <= endIdx; i++) {
-            var p1 = new Point(this.offset + cnt * this.step - 1, 50);
-            var p2 = new Point(this.offset + cnt * this.step + 1, this.editor.origHeight - 50);
+        for (var i = this.startIdx; i <= this.endIdx; i++) {
+            var offIdx = this.offsetByIndex(i);
+            var p1 = new Point(offIdx - 1, 50);
+            var p2 = new Point(offIdx + 1, this.editor.origHeight - 50);
             var o = this.editor.addRect(new Rect(p1, p2));
-            o.setBorder("solid 1px green");
+            o.setBorderWidth(1);
+            o.setColor("green");
             this.grid.push(o);
-            cnt ++;
         }
     }
 
@@ -313,19 +354,15 @@ class SchematicPage {
         this.origWidth = w;
         this.origHeight = h;
 
-        this.startIdx = startIdx;
-        this.endIdx = endIdx;
-
         this.defWidth = this.width();
         this.defHeight = this.height();
         this.setWidth(this.defWidth);
 
         this.mainDiv = mainDiv;
-        this.areas = [];
         this.GraphicObjects = [];
         this.mousePos = new Point(0,0);
 
-        this.indexLine = new IndexLine(this);
+        this.indexLine = new IndexLine(this, startIdx, endIdx);
         if (offset && step)
             this.indexLine.setParams(offset, step);
     }
@@ -340,22 +377,6 @@ class SchematicPage {
 
     onMouseMove(p) {
         this.mousePos = p;
-    }
-
-    addArea(rect, name) {
-        var graphRect = this.addRect(rect);
-        var area = new Area(this, graphRect, name);
-        this.areas.push(area);
-        return area;
-    }
-
-    removeArea(area) {
-        for (var i in this.areas) {
-            if (this.areas[i] === area) {
-                this.areas.splice(i, 1);
-            }
-        }
-        area.destroy();
     }
 
     addPoint(p) {
@@ -377,13 +398,6 @@ class SchematicPage {
             }
         }
         o.destroy();
-    }
-
-    indexLineSwitch() {
-        if (this.indexLine.isShow())
-            this.indexLine.hide();
-        else
-            this.indexLine.show();
     }
 
     setWidth(w) {
@@ -444,10 +458,202 @@ class SchematicPage {
         return false;
     }
 
+    load(onLoaded) {
+        this.onLoaded = onLoaded;
+        var f = function (data) {
+            var ret;
+            eval('ret = ' + data);
+            if (ret['result'] != 'ok')
+                alert(data);
+
+            var listLinkPoints = [];
+            for (var i in ret['link_points']) {
+                var r = ret['link_points'][i]['rect'];
+                var from = ret['link_points'][i]['from'];
+                var to = ret['link_points'][i]['to'];
+                var link = ret['link_points'][i]['link'];
+                var rect = new Rect(new Point(r['left'], r['top']),
+                                    new Point(parseInt(r['left']) + parseInt(r['width']),
+                                              parseInt(r['top']) + parseInt(r['height'])));
+                var lp = new LinkPoint(this, rect, from ,to, link);
+                listLinkPoints.push(lp);
+            }
+
+            var listItems = [];
+            for (var i in ret['items_list']) {
+                var r = ret['items_list'][i]['rect'];
+                var name = ret['items_list'][i]['name'];
+                var rect = new Rect(new Point(r['left'], r['top']),
+                                    new Point(parseInt(r['left']) + parseInt(r['width']),
+                                              parseInt(r['top']) + parseInt(r['height'])));
+                var item = new SchematicItem(this, rect, name);
+                listItems.push(item);
+            }
+            this.onLoaded(listLinkPoints, listItems);
+        }
+
+        mk_query("load_page",
+                 {'mod': 'page',
+                  'id': this.id},
+                 f.bind(this), true);
+    }
+
+}
+
+class LinkPoint {
+    constructor(editor, rect, from, to, link) {
+        this.editor = editor;
+        this.rect = rect;
+        this.from = parseInt(from);
+        this.to = parseInt(to);
+        this.link = link;
+    }
+
+    setGraphicRect(graphRect) {
+        this.graphRect = graphRect;
+        graphRect.setName(this.from + ' -> ' + this.to);
+        var f = function () { this.onClick(); };
+        graphRect.setOnClick(f.bind(this));
+    }
+
+    onClick() {
+        if (this.link)
+            location.href = this.link;
+    }
+}
+
+class SchematicItem {
+    constructor(editor, rect, name) {
+        this.editor = editor;
+        this.rect = rect;
+        this.name = name;
+    }
+
+    setGraphicRect(graphRect) {
+        this.graphRect = graphRect;
+        graphRect.setName(this.name);
+        var f = function () { this.onClick(); };
+        graphRect.setOnClick(f.bind(this));
+    }
+
+    onClick() {
+
+    }
 }
 
 class Navigator extends SchematicPage {
+    constructor(id, w, h,
+                startIdx, endIdx,
+                offset, step,
+                mainDiv, schImg) {
+        super(id, w, h, startIdx, endIdx, offset, step, mainDiv, schImg);
+        this.linkPoints = [];
+        this.items = [];
+        this.load();
 
+        this.indexSelector = NaN;
+        this.linkPointSelector = NaN;
+        this.needToHighligntLinkPoint = NaN;
+    }
+
+    addLinkPoint(lp) {
+        var graphRect = this.addRect(lp.rect);
+        graphRect.setBorderWidth("1");
+        graphRect.setColor("red");
+        graphRect.setMouseCursor("pointer");
+
+        lp.setGraphicRect(graphRect);
+        this.linkPoints.push(lp);
+        return lp;
+    }
+
+    addItem(item) {
+        var graphRect = this.addRect(item.rect);
+        graphRect.setBorderWidth("1");
+        graphRect.setMouseCursor("pointer");
+        item.setGraphicRect(graphRect);
+        this.items.push(item);
+        return item;
+    }
+
+    setHighlightLinkPoint(linkPointTo) {
+        this.needToHighligntLinkPoint = linkPointTo;
+    }
+
+    load() {
+        var f = function (linkPoints, items) {
+            for (var i in linkPoints) {
+                var lp = linkPoints[i];
+                this.addLinkPoint(lp);
+            }
+
+            for (var i in items) {
+                var item = items[i];
+                this.addItem(item);
+            }
+
+            if (this.needToHighligntLinkPoint) {
+                var lp = this.linkPointByTo(this.needToHighligntLinkPoint);
+                if (lp)
+                    this.showLinkPointSelector(lp);
+            }
+
+        }
+        super.load(f.bind(this));
+    }
+
+    onClick() {
+        this.hideIndexSelector();
+        this.hidelinkPointSelector();
+    }
+
+    showIndexSelector(index) {
+        this.hideIndexSelector();
+        var offIdx = this.indexLine.offsetByIndex(index);
+        if (offIdx === NaN)
+            return;
+        var rect = new Rect(new Point(offIdx - 25, 50),
+                        new Point(offIdx + 25, this.origHeight - 50));
+        this.indexSelector = this.addRect(rect);
+        this.indexSelector.setColor("transparent");
+        this.indexSelector.setClass("index_blinking");
+        this.indexSelector.setBorderWidth(5);
+    }
+
+    hideIndexSelector() {
+        if (!this.indexSelector)
+            return;
+        this.indexSelector.destroy();
+        this.indexSelector = NaN;
+    }
+
+    showLinkPointSelector(lp) {
+        this.hidelinkPointSelector();
+        var rect = new Rect(lp.rect.topLeft().minus(new Point(10, 10)),
+                            lp.rect.bottomRight().plus(new Point(10, 10)));
+        this.linkPointSelector = this.addRect(rect);
+        this.linkPointSelector.setColor("transparent");
+        this.linkPointSelector.setClass("index_blinking");
+        this.linkPointSelector.setBorderWidth(10);
+        var f = function () { this.hidelinkPointSelector(); };
+        this.linkPointSelector.setOnClick(f.bind(this));
+    }
+
+    hidelinkPointSelector() {
+        if (!this.linkPointSelector)
+            return;
+        this.linkPointSelector.destroy();
+        this.linkPointSelector = NaN;
+    }
+
+    linkPointByTo(to) {
+        for (var i in this.linkPoints) {
+            var lp = this.linkPoints[i];
+            if (lp.to == to)
+                return lp;
+        }
+        return NaN;
+    }
 }
 
 class Editor extends SchematicPage {
@@ -458,6 +664,7 @@ class Editor extends SchematicPage {
                 editBox, messageBox) {
         super(id, w, h, startIdx, endIdx, offset, step, mainDiv, schImg);
 
+        this.areas = [];
         this.mode = 'start';
         this.editBox = editBox;
         this.messageBox = messageBox;
@@ -513,11 +720,23 @@ class Editor extends SchematicPage {
         }
     }
 
-    msg(msg) {
+    msgOk(msg) {
         this.messageBox.innerHTML = msg;
-        this.messageBox.style.left = this.mousePos.x;
-        this.messageBox.style.top = this.mousePos.y;
-        this.messageBox.style.display = 'block';
+        this.messageBox.style.border = "solid 2px green";
+        this.messageBox.style.display = 'inline';
+        var f = function() {
+            this.msgHide();
+        }
+        setTimeout(f.bind(this), 2000);
+    }
+
+    msgErr(msg) {
+        this.messageBox.innerHTML = msg;
+        this.messageBox.style.border = "solid 2px red";
+        this.messageBox.style.display = 'inline';
+        var f = function() {
+            this.msgHide();
+        }
     }
 
     msgHide() {
@@ -530,8 +749,8 @@ class Editor extends SchematicPage {
     }
 
     editBoxShow(p, onEnter, onEsc, val = "") {
-        this.editBox.style.left = this.left() + p.x;
-        this.editBox.style.top = this.top() + p.y;
+        this.editBox.style.left = this.left() + p.toScaled(this.scale).x;
+        this.editBox.style.top = this.top() + p.toScaled(this.scale).y;
         this.editBox.style.display = 'block';
         this.editBox.value = val;
         this.editBox.focus();
@@ -580,7 +799,28 @@ class Editor extends SchematicPage {
         return false;
     }
 
+    indexLineSwitch() {
+        if (this.indexLine.isShow())
+            this.indexLine.hide();
+        else
+            this.indexLine.show();
+    }
 
+    addArea(rect, name) {
+        var graphRect = this.addRect(rect);
+        var area = new Area(this, graphRect, name);
+        this.areas.push(area);
+        return area;
+    }
+
+    removeArea(area) {
+        for (var i in this.areas) {
+            if (this.areas[i] === area) {
+                this.areas.splice(i, 1);
+            }
+        }
+        area.destroy();
+    }
     keyPress(key) {
         var rc = super.keyPress(key);
         if (rc)
@@ -608,54 +848,41 @@ class Editor extends SchematicPage {
         }
 
         var dataIndexLine = this.indexLine.serialize();
+        if (!dataIndexLine) {
+            this.msgErr("Index line is not set");
+            return;
+        }
 
         var f = function (data) {
             var ret;
             eval('ret = ' + data);
             if (ret['result'] == 'ok')
-                alert("save successfully");
+                this.msgOk("save successfully");
 
             if (ret['result'] != 'ok')
-                alert(data);
+                this.msgErr(data);
         }
         mk_query("save_page",
                  {'mod': 'page',
                   'id': this.id,
                   'areas': JSON.stringify(dataAreas),
-                  'index_line': dataIndexLine ? JSON.stringify(dataIndexLine) : "",
+                  'index_line': JSON.stringify(dataIndexLine),
                  },
-                 f, true);
+                 f.bind(this), true);
     }
 
     load() {
-        var f = function (data) {
-            var ret;
-            eval('ret = ' + data);
-            if (ret['result'] != 'ok')
-                alert(data);
-
-            for (var i in ret['link_points']) {
-                var r = ret['link_points'][i]['rect'];
-                var name = ret['link_points'][i]['to'];
-                var rect = new Rect(new Point(r['left'], r['top']),
-                                    new Point(parseInt(r['left']) + parseInt(r['width']),
-                                              parseInt(r['top']) + parseInt(r['height'])));
-                this.addArea(rect, name);
+        var f = function (linkPoints, items) {
+            for (var i in linkPoints) {
+                var lp = linkPoints[i];
+                this.addArea(lp.rect, lp.to);
             }
 
-            for (var i in ret['items_list']) {
-                var r = ret['items_list'][i]['rect'];
-                var name = ret['items_list'][i]['name'];
-                var rect = new Rect(new Point(r['left'], r['top']),
-                                    new Point(parseInt(r['left']) + parseInt(r['width']),
-                                              parseInt(r['top']) + parseInt(r['height'])));
-                this.addArea(rect, name);
+            for (var i in items) {
+                var item = items[i];
+                this.addArea(item.rect, item.name);
             }
         }
-
-        mk_query("load_page",
-                 {'mod': 'page',
-                  'id': this.id},
-                 f.bind(this), true);
+        super.load(f.bind(this));
     }
 }

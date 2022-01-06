@@ -210,7 +210,11 @@ function page_by_index($rev, $idx) {
 
     if (!$row)
         return NULL;
-    return new Page($row);
+
+    $page = new Page($row);
+    if ($idx < $page->idx_start or $idx > $page->idx_end)
+        return NULL;
+    return $page;
 }
 
 function page_by_id($id) {
