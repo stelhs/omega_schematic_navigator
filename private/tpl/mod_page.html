@@ -1,6 +1,11 @@
 <script src="{http_js}mod_page.js?{time}"></script>
 
 <div align="left">
+
+    <!-- START BLOCK : not_access -->
+        Нет доступа
+    <!-- END BLOCK : not_access -->
+
     <!-- START BLOCK : page_found -->
         <table>
             <tr>
@@ -9,21 +14,27 @@
                     Страница: {page_id}<br>
                     Индекс: {index_start} - {index_end}
                 </td>
-                <td>
+                <td style="padding-left: 20px">
+                    <a href="javascript:;" onclick="schematic.incScale()" title="крупнее" style="padding-right: 30px">
+                        <img class="img_button" src="{http_img}plus.png">
+                    </a>
+                    <a href="javascript:;" onclick="schematic.decScale()" title="мельче" style="padding-right: 30px">
+                        <img class="img_button" src="{http_img}minus.png">
+                    </a>
                     <!-- START BLOCK : button_edit -->
                         <a href="{link}" onclick="">
-                            <img class="img_button" src="{http_img}edit.png">
+                            <img class="img_button" src="{http_img}edit.png" title="редактировать">
                         </a>
                     <!-- END BLOCK : button_edit -->
 
                     <!-- START BLOCK : editor_buttons -->
-                        <a href="javascript:editor.save()" onclick="">
+                        <a href="javascript:schematic.save()" onclick="" title="сохранить">
                             <img class="img_button" src="{http_img}save.png">
                         </a>
-                        <a href="{link_cancel}" onclick="">
+                        <a href="{link_cancel}" onclick="" title="закрыть редактирование">
                             <img class="img_button" src="{http_img}cancel.png">
                         </a>
-                        <a href="javascript:editor.indexLineSwitch()" onclick="">
+                        <a href="javascript:schematic.indexLineSwitch()" onclick="" title="сетка">
                             <img class="img_button" src="{http_img}grid.png">
                         </a>
                         <div id="messageBox" style="border: solid 2px red;
@@ -63,43 +74,60 @@
                  style="width: {def_width}; height: {def_height}"
                  src="{http_img}pages/{sch_img}">
 
+            <div id="popupMessageBox"
+                 onclick="schematic.msgHide()"
+                 style="border: solid 2px green;
+                        height: max-content;
+                        position: absolute;
+                        background-color: yellow;
+                        color: black;
+                        width: max-content;
+                        padding-left: 10;
+                        padding-right: 10;
+                        display: none;"></div>
+
             <script>
                 $(document).ready(function () {
-                    nav = new Navigator({id},
+                    schematic = new Navigator({id},
                                         {original_width}, {original_height},
                                         {index_start}, {index_end},
                                         {offset}, {step},
-                                        $$('mainDiv'), $$("schImg"));
+                                        $$('mainDiv'), $$("schImg"),
+                                        $$('popupMessageBox'));
 
                     $("#schImg").on("click", function (event) {
                         p = new Point(event.pageX - this.offsetLeft, event.pageY - this.offsetTop)
-                        nav.onClick(p.fromScaled(nav.scale));
+                        schematic.onClick(p.fromScaled(schematic.scale));
                     });
 
                     $("#schImg").on("mousemove", function (event) {
                         p = new Point(event.pageX - this.offsetLeft, event.pageY - this.offsetTop)
-                        schP = p.fromScaled(nav.scale);
-                        nav.onMouseMove(schP);
+                        schP = p.fromScaled(schematic.scale);
+                        schematic.onMouseMove(schP);
                     });
 
                     document.addEventListener("keypress", function onEvent(event) {
-                        nav.keyPress(event.key);
+                        schematic.keyPress(event.key);
                     });
 
                     <!-- START BLOCK : show_index_selector -->
-                        nav.showIndexSelector({index});
+                        schematic.showIndexSelector({index});
                     <!-- END BLOCK : show_index_selector -->
 
                     <!-- START BLOCK : show_link_point_selector -->
-                        nav.setHighlightLinkPoint({from_index});
+                        schematic.setHighlightLinkPoint({from_index}, {to_index});
                     <!-- END BLOCK : show_link_point_selector -->
+
+                    <!-- START BLOCK : show_item_selector -->
+                        schematic.setHighlightItem({id});
+                    <!-- END BLOCK : show_item_selector -->
                 });
             </script>
         <!-- END BLOCK : navigator -->
 
 
         <!-- START BLOCK : editor -->
-            <input id="editBox" size="4" type="text" style="position: absolute; display: none">
+            <input id="editBox" size="8" type="text" style="position: absolute; display: none">
 
             <img id="schImg"
                  style="width: {def_width}; height: {def_height}"
@@ -107,7 +135,7 @@
 
             <script>
                 $(document).ready(function () {
-                    editor = new Editor({id},
+                    schematic = new Editor({id},
                                         {original_width}, {original_height},
                                         {index_start}, {index_end},
                                         {offset}, {step},
@@ -116,19 +144,19 @@
 
                     $("#schImg").on("click", function (event) {
                         p = new Point(event.pageX - this.offsetLeft, event.pageY - this.offsetTop)
-                        editor.onClick(p.fromScaled(editor.scale));
+                        schematic.onClick(p.fromScaled(schematic.scale));
                     });
 
                     $("#schImg").on("mousemove", function (event) {
                         p = new Point(event.pageX - this.offsetLeft, event.pageY - this.offsetTop)
-                        schP = p.fromScaled(editor.scale);
-                        editor.onMouseMove(schP);
+                        schP = p.fromScaled(schematic.scale);
+                        schematic.onMouseMove(schP);
                         $('#img_coordinate').html("X Coordinate: " + schP.x +
                                                   "<br/> Y Coordinate: " + schP.y);
                     });
 
                     document.addEventListener("keypress", function onEvent(event) {
-                        editor.keyPress(event.key);
+                        schematic.keyPress(event.key);
                     });
                 });
             </script>

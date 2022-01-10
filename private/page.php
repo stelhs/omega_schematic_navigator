@@ -26,25 +26,46 @@ class Link_point {
         $this->to = $to;
     }
 
+    function description_to() {
+        return index_description($this->page->rev, $this->to);
+    }
+
     function serialize_as_arr() {
         return ['page_id' => $this->page->id,
                 'from' => $this->from,
                 'to' => $this->to,
-                'rect' => $this->rect->serialize_as_arr()];
+                'rect' => $this->rect->serialize_as_arr(),
+                'description' => $this->description_to()];
     }
 }
 
 class Item {
-    function __construct($page, $rect, $name) {
+    function __construct($page, $rect, $name, $id) {
         $this->page = $page;
         $this->rect = $rect;
-        $this->name = $name;
+        $this->name = trim($name);
+        $this->id = $id;
+    }
+
+    function description() {
+        $row = db()->query('select * from legend ' .
+                           'where name = "%s"', $this->name);
+        if ($row > 0 and isset($row['description']))
+            return $row['description'];
+
+        $row = db()->query('select * from abbreviations ' .
+                           'where name = "%s"', $this->name);
+        if ($row > 0 and isset($row['description']))
+            return $row['description'];
+        return "";
     }
 
     function serialize_as_arr() {
         return ['page_id' => $this->page->id,
                 'rect' => $this->rect->serialize_as_arr(),
-                'name' => $this->name];
+                'name' => $this->name,
+                'id' => $this->id,
+                'description' => $this->description()];
     }
 }
 
@@ -87,9 +108,11 @@ class Page {
         db()->query("delete from link_points where page_id = %d", $this->id);
     }
 
-    function update_index_line($offset, $step) {
+    function update_index_line($start_index, $end_index, $offset, $step) {
         $rc = db()->update("pages", $this->id,
-                           ['offset' => $offset,
+                           ['index_start' => $start_index,
+                            'index_end' => $end_index,
+                            'offset' => $offset,
                             'step' => $step]);
 
         if ($rc < 0)
@@ -193,7 +216,7 @@ class Page {
         foreach ($rows as $row) {
             $rect = new Rect($row['rect_left'], $row['rect_top'],
                              $row['rect_width'], $row['rect_height']);
-            $item = new Item($this, $rect, $row['name']);
+            $item = new Item($this, $rect, $row['name'], $row['id']);
             $list[] = $item;
         }
         return ['ok', $list];
@@ -225,4 +248,21 @@ function page_by_id($id) {
         return NULL;
     return new Page($row);
 }
+
+function index_list($rev) {
+    $rows = db()->query_list('select * from index_line where rev = "%s"', $rev);
+    return $rows;
+}
+
+function index_description($rev, $idx) {
+    $row = db()->query('select name from index_line ' .
+                        'where rev = "%s" and ' .
+                        '%d >= start and %d <= end',
+                        $rev, $idx, $idx);
+    if ($row < 0 or !isset($row['name']))
+        return "";
+
+    return $row['name'];
+}
+
 

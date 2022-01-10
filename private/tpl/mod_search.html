@@ -1,0 +1,54 @@
+<div align="left" style="padding-left: 10px">
+    <h3> Поиск </h3>
+
+    <form name="search" method="GET" action="{form_url}" id="search_form">
+        <input type="hidden" name="mod" value="{mod}">
+
+        <table>
+            <tr>
+                <td>Версия схемы: </td>
+                <td>
+                    <select name="rev" onchange="this.form.submit()">
+                        <!-- START BLOCK : select_revision -->
+                            <option value="{rev}" {selected}>{rev}</option>
+                        <!-- END BLOCK : select_revision -->
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>ключевое слово: </td>
+                <td>
+                    <input type="text" name="search" size="20" value="{search_text}" id="search_text" autofocus>
+                </td>
+            </tr>
+            <tr>
+                <td colspan=2>
+                    <input class="buttonSend" type="submit" value="Искать"/>
+                </td>
+            </tr>
+        </table>
+    </form>
+
+    <!-- START BLOCK : not_found -->
+        Ничего не найдено
+    <!-- END BLOCK : not_found -->
+
+    <!-- START BLOCK : found -->
+        Найдено: <br>
+
+    <div style="padding-top: 20px;
+                padding-left: 50px;
+                padding-bottom: 50px">
+        <!-- START BLOCK : item -->
+            <a href="{link}">Страница {page_id}: {name} - {description}</a><br>
+        <!-- END BLOCK : item -->
+        <br>
+        <br>
+
+        <!-- START BLOCK : range -->
+            <a href="{link}">Индекс {start}-{end}: {name}</a><br>
+        <!-- END BLOCK : range -->
+    </div>
+
+    <!-- END BLOCK : found -->
+</div>

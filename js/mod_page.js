@@ -230,7 +230,10 @@ class Area {
 
     onDblClick() {
         var p = this.graphRect.rect.bottomRight();
-        this.editor.editBoxShow(p, function (name) {},
+        var f = function(name) {
+            this.setName(name);
+        }
+        this.editor.editBoxShow(p, f.bind(this),
                                    function () {},
                                    this.name);
     }
@@ -273,12 +276,14 @@ class IndexLine {
 
     makeByArea(area) {
         var rect = area.graphRect.rect;
-        var m = area.name.match(/\^(\d+) (\d+)/);
-        if (m.length < 3)
+        var m = area.name.match(/\^(\d+) (\d+) (\d+) (\d+)/);
+        if (m.length < 5)
             return NaN;
 
         var areaStart = parseInt(m[1]);
         var areaEnd = parseInt(m[2]);
+        this.startIdx = parseInt(m[3]);
+        this.endIdx = parseInt(m[4]);
         var areaLeft = rect.left();
         var areaRight = rect.right();
 
@@ -335,7 +340,9 @@ class IndexLine {
     serialize() {
         if (!this.step)
             return NaN;
-        return {'offset': this.offset,
+        return {'start_index': this.startIdx,
+                'end_index': this.endIdx,
+                'offset': this.offset,
                 'step': this.step};
     }
 
@@ -472,10 +479,11 @@ class SchematicPage {
                 var from = ret['link_points'][i]['from'];
                 var to = ret['link_points'][i]['to'];
                 var link = ret['link_points'][i]['link'];
+                var description = ret['link_points'][i]['description'];
                 var rect = new Rect(new Point(r['left'], r['top']),
                                     new Point(parseInt(r['left']) + parseInt(r['width']),
                                               parseInt(r['top']) + parseInt(r['height'])));
-                var lp = new LinkPoint(this, rect, from ,to, link);
+                var lp = new LinkPoint(this, rect, from ,to, link, description);
                 listLinkPoints.push(lp);
             }
 
@@ -483,10 +491,12 @@ class SchematicPage {
             for (var i in ret['items_list']) {
                 var r = ret['items_list'][i]['rect'];
                 var name = ret['items_list'][i]['name'];
+                var desc = ret['items_list'][i]['description'];
+                var id = ret['items_list'][i]['id'];
                 var rect = new Rect(new Point(r['left'], r['top']),
                                     new Point(parseInt(r['left']) + parseInt(r['width']),
                                               parseInt(r['top']) + parseInt(r['height'])));
-                var item = new SchematicItem(this, rect, name);
+                var item = new SchematicItem(this, rect, name, desc, id);
                 listItems.push(item);
             }
             this.onLoaded(listLinkPoints, listItems);
@@ -501,17 +511,18 @@ class SchematicPage {
 }
 
 class LinkPoint {
-    constructor(editor, rect, from, to, link) {
+    constructor(editor, rect, from, to, link, description) {
         this.editor = editor;
         this.rect = rect;
         this.from = parseInt(from);
         this.to = parseInt(to);
         this.link = link;
+        this.description = description;
     }
 
     setGraphicRect(graphRect) {
         this.graphRect = graphRect;
-        graphRect.setName(this.from + ' -> ' + this.to);
+        graphRect.setName(this.from + ' -> ' + this.to + '\n' + this.description);
         var f = function () { this.onClick(); };
         graphRect.setOnClick(f.bind(this));
     }
@@ -523,21 +534,24 @@ class LinkPoint {
 }
 
 class SchematicItem {
-    constructor(editor, rect, name) {
-        this.editor = editor;
+    constructor(page, rect, name, desc, id) {
+        this.page = page;
         this.rect = rect;
         this.name = name;
+        this.desc = desc;
+        this.id = id;
     }
 
     setGraphicRect(graphRect) {
         this.graphRect = graphRect;
-        graphRect.setName(this.name);
+        graphRect.setName(this.name + "\n" + this.desc);
         var f = function () { this.onClick(); };
         graphRect.setOnClick(f.bind(this));
     }
 
     onClick() {
-
+        this.page.msgShow(this.rect.topLeft(),
+                          this.name + "<br>" + this.desc);
     }
 }
 
@@ -545,8 +559,10 @@ class Navigator extends SchematicPage {
     constructor(id, w, h,
                 startIdx, endIdx,
                 offset, step,
-                mainDiv, schImg) {
+                mainDiv, schImg,
+                popupMsgBox) {
         super(id, w, h, startIdx, endIdx, offset, step, mainDiv, schImg);
+        this.messageBox = popupMsgBox;
         this.linkPoints = [];
         this.items = [];
         this.load();
@@ -554,6 +570,7 @@ class Navigator extends SchematicPage {
         this.indexSelector = NaN;
         this.linkPointSelector = NaN;
         this.needToHighligntLinkPoint = NaN;
+        this.needToHighligntItem = NaN;
     }
 
     addLinkPoint(lp) {
@@ -576,8 +593,12 @@ class Navigator extends SchematicPage {
         return item;
     }
 
-    setHighlightLinkPoint(linkPointTo) {
-        this.needToHighligntLinkPoint = linkPointTo;
+    setHighlightLinkPoint(linkPointTo, linkPointFrom) {
+        this.needToHighligntLinkPoint = [linkPointTo, linkPointFrom];
+    }
+
+    setHighlightItem(itemId) {
+        this.needToHighligntItem = itemId;
     }
 
     load() {
@@ -593,9 +614,18 @@ class Navigator extends SchematicPage {
             }
 
             if (this.needToHighligntLinkPoint) {
-                var lp = this.linkPointByTo(this.needToHighligntLinkPoint);
+                var lp = this.linkPointByTo(this.needToHighligntLinkPoint[0]);
                 if (lp)
                     this.showLinkPointSelector(lp);
+                else {
+                    this.showIndexSelector(this.needToHighligntLinkPoint[1]);
+                }
+            }
+
+            if (this.needToHighligntItem) {
+                item = this.itemById(this.needToHighligntItem);
+                if (item)
+                    this.showItemSelector(item);
             }
 
         }
@@ -605,6 +635,8 @@ class Navigator extends SchematicPage {
     onClick() {
         this.hideIndexSelector();
         this.hidelinkPointSelector();
+        this.hideItemSelector();
+        this.msgHide();
     }
 
     showIndexSelector(index) {
@@ -639,6 +671,25 @@ class Navigator extends SchematicPage {
         this.linkPointSelector.setOnClick(f.bind(this));
     }
 
+    showItemSelector(item) {
+        this.hideItemSelector();
+        var rect = new Rect(item.rect.topLeft().minus(new Point(10, 10)),
+                            item.rect.bottomRight().plus(new Point(10, 10)));
+        this.itemSelector = this.addRect(rect);
+        this.itemSelector.setColor("transparent");
+        this.itemSelector.setClass("index_blinking");
+        this.itemSelector.setBorderWidth(10);
+        var f = function () { this.hideItemSelector(); };
+        this.itemSelector.setOnClick(f.bind(this));
+    }
+
+    hideItemSelector() {
+        if (!this.itemSelector)
+            return;
+        this.itemSelector.destroy();
+        this.itemSelector = NaN;
+    }
+
     hidelinkPointSelector() {
         if (!this.linkPointSelector)
             return;
@@ -654,6 +705,33 @@ class Navigator extends SchematicPage {
         }
         return NaN;
     }
+
+    itemById(id) {
+        for (var i in this.items) {
+            var item = this.items[i];
+            if (item.id == id)
+                return item;
+        }
+        return NaN;
+    }
+
+    msgShow(point, msg) {
+        this.messageBox.innerHTML = msg;
+        this.messageBox.style.border = "solid 2px green";
+        this.messageBox.style.display = 'block';
+        this.messageBox.style.left = this.left() + point.toScaled(this.scale).x;
+        this.messageBox.style.top = this.top() + point.toScaled(this.scale).y;
+        var f = function() {
+            this.msgHide();
+        }
+        setTimeout(f.bind(this), 3000);
+    }
+
+    msgHide() {
+        this.messageBox.style.display = 'none';
+        this.messageBox.innerHTML = "";
+    }
+
 }
 
 class Editor extends SchematicPage {
@@ -713,7 +791,7 @@ class Editor extends SchematicPage {
                 this.editedArea = NaN;
             };
             var onEsc = function (name) { this.removeArea(this.editedArea); this.editedArea = NaN; };
-            this.editBoxShow(p.toScaled(this.scale),
+            this.editBoxShow(p,
                              onEnter.bind(this),
                              onEsc.bind(this));
             this.mode = 'start';
@@ -828,6 +906,7 @@ class Editor extends SchematicPage {
 
         switch(key) {
         case "Delete":
+        case "=":
             for (var i in this.areas) {
                 var area = this.areas[i];
                 if (area.selected)

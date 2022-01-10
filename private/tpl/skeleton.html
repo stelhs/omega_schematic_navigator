@@ -17,11 +17,24 @@
         <!-- START BLOCK : user_logout -->
             <a href="{link_logout}"> Выход </a> |
         <!-- END BLOCK : user_logout -->
+        <!-- START BLOCK : user_login -->
+            <a href="{link_login}"> Вход </a> |
+        <!-- END BLOCK : user_login -->
         <a href="{link_pages}" style="color: orange"> Схемы </a> |
+        <a href="{link_index}" style="color: orange"> Индекс </a> |
+        <div style="display: inline-block">
+            <form name="search_form" method="GET" action="{search_url}" id="main_search_form">
+                <input type="text" name="search" size="12" value="{text}" autofocus>
+                <input type="hidden" name="mod" value="search">
+
+                <a href="javascript:;" onclick="search_form.submit();">
+                    <img src="{http_img}search_mini.png" style="vertical-align: middle">
+                </a>
+            </form>
+        </div>
         <hr>
 
         <!-- START INSERT : message_boxes.html --> <!-- END INSERT : message_boxes.html -->
-
 
         <!-- START BLOCK : user_auth -->
             <div align="center">
@@ -51,7 +64,6 @@
                    </div>
             </div>
         <!-- END BLOCK : user_auth -->
-
         <!-- START BLOCK : module_content -->
             {content}
         <!-- END BLOCK : module_content -->

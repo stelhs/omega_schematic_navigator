@@ -16,12 +16,9 @@ function main($tpl)
     global $tpl;
     session_start();
 
-    $tpl->assign(NULL, ['link_location' => mk_link(['mod' => 'location']),
-                        'link_catalog' => mk_link(['mod' => 'catalog']),
-                        'link_new' => mk_link(['mod' => 'object']),
-                        'link_boxes' => mk_link(['mod' => 'boxes']),
-                        'link_absent' => mk_link(['mod' => 'absent']),
-                        'link_photos' => mk_link(['mod' => 'photos']),
+    $tpl->assign(NULL, ['link_pages' => mk_link(['mod' => 'page']),
+                        'link_index' => mk_link(['mod' => 'index']),
+                        'search_url' => mk_link(['mod' => 'search']),
                         ]);
 
     $mbx = msg_box()->get();
@@ -31,16 +28,20 @@ function main($tpl)
 
     $user = user_by_cookie();
     if (!$user) {
-        $tpl->assign('user_auth');
-        return;
-    }
-
-    $tpl->assign('user_logout',
-                ['link_logout' => mk_query(['method' => 'user_logout'])]);
+        $tpl->assign('user_login',
+                    ['link_login' => mk_link(['login' => '1'])]);
+    } else
+        $tpl->assign('user_logout',
+                    ['link_logout' => mk_query(['method' => 'user_logout'])]);
 
     $mod_name = "page";
     if(isset($_GET['mod']))
        $mod_name = $_GET['mod'];
+
+    if ($_GET['login']) {
+        $tpl->assign('user_auth');
+        return;
+    }
 
     $mod = modules()->by_name($mod_name);
     if (!$mod) {

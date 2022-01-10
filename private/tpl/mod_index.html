@@ -1,0 +1,19 @@
+<div align="left">
+
+    <form name="select_revision" method="GET" action="{form_url}">
+        <input type="hidden" name="mod" value="{mod}">
+        Версия схемы:
+        <select name="rev" onchange="this.form.submit()">
+            <!-- START BLOCK : select_revision -->
+                <option value="{rev}" {selected}>{rev}</option>
+            <!-- END BLOCK : select_revision -->
+        </select>
+    </form>
+
+    <div style="padding-left: 50px;
+                padding-bottom: 50px;">
+        <!-- START BLOCK : range -->
+            <a href="{link}">{start}-{end}: {name}</a><br>
+        <!-- END BLOCK : range -->
+    </div>
+</div>

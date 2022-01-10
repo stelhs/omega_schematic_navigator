@@ -4,16 +4,94 @@ require_once "private/page.php";
 
 class Mod_page extends Module {
 
+    function load_images() {
+        $files = scandir(sprintf("%s/i/pages", conf()['root']));
+
+        foreach ($files as $file) {
+            if ($file == '.' or $file == '..')
+                continue;
+            $fname = sprintf("%s/i/pages/%s", conf()['root'], $file);
+            $inf = getimagesize($fname);
+            $id = db()->insert('pages',
+                         ['rev' => 'first',
+                          'filename' => $file,
+                          'width' => $inf[0],
+                          'height' => $inf[1]]);
+
+            printf("added %s, %d\n", $file, $id);
+        }
+    }
+
+    function load_legend() {
+        $c = file_get_contents(sprintf("%s/private/legend.txt", conf()['root']));
+        $rows = string_to_rows($c);
+        foreach ($rows as $row) {
+            $pos = strpos($row, '-');
+            $name = trim(substr($row, 0, $pos));
+            $desc = trim(substr(trim(substr($row, $pos)), 1));
+
+            if (is_numeric($name[0])) {
+                printf("incorrect name '%s'\n", $row);
+                continue;
+            }
+
+            if ($desc[-1] == ';')
+                $desc = substr($desc, 0, -1);
+
+            $id = db()->insert('legend', ['name' => $name,
+                                          'description' => $desc]);
+            if ($id <= 0) {
+                printf("can't insert '%s'\n", $row);
+            }
+        }
+    }
+
+    function load_abbreviations() {
+        $c = file_get_contents(sprintf("%s/private/abbreviations.txt", conf()['root']));
+        $rows = string_to_rows($c);
+        foreach ($rows as $row) {
+            $pos = strpos($row, '-');
+            $name = trim(substr($row, 0, $pos));
+            $desc = trim(substr(trim(substr($row, $pos)), 1));
+
+            if (is_numeric($name[0])) {
+                printf("incorrect name '%s'\n", $row);
+                continue;
+            }
+
+            if ($desc[-1] == ';')
+                $desc = substr($desc, 0, -1);
+
+            $id = db()->insert('abbreviations', ['name' => $name,
+                                                 'description' => $desc]);
+            if ($id <= 0) {
+                printf("can't insert '%s'\n", $row);
+            }
+        }
+    }
+
     function content($args = [])
     {
+     //   $this->load_images();
+       // exit;
+
+      //  $this->load_abbreviations();
+
         $tpl = tpl("mod_page.html");
         $tpl->assign();
 
         $id = isset($args['id']) ? $args['id'] : 1;
         $idx = isset($args['idx']) ? $args['idx'] : 0;
-        $fromIdx = isset($args['from']) ? $args['from'] : NULL;
+        $from_idx = isset($args['from']) ? $args['from'] : NULL;
+        $highlight_item = isset($args['item']) ? $args['item'] : NULL;
         $rev = isset($args['rev']) ? $args['rev'] : 'first';
         $mode = isset($args['mode']) ? $args['mode'] : 'navigator';
+
+        $user = user_by_cookie();
+        if ($mode == 'editor' and !$user) {
+            $tpl->assign("not_access");
+            return $tpl->result();
+        }
 
         if ($id)
             $page = page_by_id($id);
@@ -70,13 +148,19 @@ class Mod_page extends Module {
             $link = mk_link(['mod' => 'page',
                              'mode' => 'editor',
                              'id' => $id]);
-            $tpl->assign("button_edit", ['link' => $link]);
+            if ($user)
+                $tpl->assign("button_edit", ['link' => $link]);
             $tpl->assign('navigator', $schInfo);
 
-            if ($fromIdx)
-                $tpl->assign("show_link_point_selector", ['from_index' => $fromIdx]);
+            if ($from_idx)
+                $tpl->assign("show_link_point_selector",
+                             ['from_index' => $from_idx,
+                              'to_index' => $idx]);
             else  if ($idx)
                 $tpl->assign("show_index_selector", ['index' => $idx]);
+
+            if ($highlight_item)
+                $tpl->assign("show_item_selector", ['id' => $highlight_item]);
             break;
         }
 
@@ -86,8 +170,16 @@ class Mod_page extends Module {
 
     function query($args)
     {
+        $user = user_by_cookie();
+
         switch($args['method']) {
         case 'save_page':
+            if (!$user) {
+                echo json_encode(['result' => 'error',
+                                  'reason' => 'Not autorized']);
+                return;
+            }
+
             $page_id = $args['id'];
             $areas = json_decode($args['areas'], true);
             $index_line = json_decode($args['index_line'], true);
@@ -115,7 +207,8 @@ class Mod_page extends Module {
         $page->remove_items();
 
         if (is_array($index_line) and count($index_line)) {
-            $ret = $page->update_index_line($index_line['offset'], $index_line['step']);
+            $ret = $page->update_index_line($index_line['start_index'], $index_line['end_index'],
+                                            $index_line['offset'], $index_line['step']);
             if ($ret[0] != 'ok')
                 return $ret;
         }
@@ -124,15 +217,15 @@ class Mod_page extends Module {
             foreach ($areas as $area) {
                 $rect = new Rect($area['rect']['left'], $area['rect']['top'],
                                  $area['rect']['width'], $area['rect']['height']);
-
-                if (is_numeric($area['name'][0])) {
-                    $ret = $page->add_link_point($rect, (int)$area['name']);
+                $name = trim($area['name']);
+                if (is_numeric($name[0])) {
+                    $ret = $page->add_link_point($rect, (int)$name);
                     if ($ret[0] != 'ok')
                         return $ret;
                     continue;
                 }
 
-                $ret = $page->add_item($rect, $area['name']);
+                $ret = $page->add_item($rect, $name);
                 if ($ret[0] != 'ok')
                     return $ret;
             }

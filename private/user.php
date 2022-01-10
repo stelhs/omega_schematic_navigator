@@ -23,7 +23,7 @@ function user_by_login_pass($login, $pass)
 {
     $query = sprintf('SELECT * FROM users WHERE `login` = "%s" ' .
                      'AND `pass` = password("%s")', $login, $pass);
-    $row = db()->query($query);
+    $row = db()->query("%s", $query);
     if (!$row)
       return NULL;
     return new User($row);

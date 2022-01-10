@@ -22,14 +22,9 @@ function process_query($args)
             msg_box()->set("message_auth_error");
             return;
         }
-
         $user->set_cookie();
         header('Location: ' . mk_link());
     }
-
-    $user = user_by_cookie();
-    if (!$user)
-        return;
 
     switch ($args['method']) {
     case 'user_logout':

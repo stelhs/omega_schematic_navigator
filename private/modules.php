@@ -2,6 +2,8 @@
 
 
 require_once "private/mod_page.php";
+require_once "private/mod_search.php";
+require_once "private/mod_index.php";
 
 class Module {
     public $name = "undefined";
