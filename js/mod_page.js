@@ -496,7 +496,8 @@ class SchematicPage {
                 var rect = new Rect(new Point(r['left'], r['top']),
                                     new Point(parseInt(r['left']) + parseInt(r['width']),
                                               parseInt(r['top']) + parseInt(r['height'])));
-                var item = new SchematicItem(this, rect, name, desc, id);
+                var linkedItems = ret['items_list'][i]['linked_items'];
+                var item = new SchematicItem(this, rect, name, desc, id, linkedItems);
                 listItems.push(item);
             }
             this.onLoaded(listLinkPoints, listItems);
@@ -534,12 +535,13 @@ class LinkPoint {
 }
 
 class SchematicItem {
-    constructor(page, rect, name, desc, id) {
+    constructor(page, rect, name, desc, id, linkedItems) {
         this.page = page;
         this.rect = rect;
         this.name = name;
         this.desc = desc;
         this.id = id;
+        this.linkedItems = linkedItems;
     }
 
     setGraphicRect(graphRect) {
@@ -550,8 +552,16 @@ class SchematicItem {
     }
 
     onClick() {
-        this.page.msgShow(this.rect.topLeft(),
-                          this.name + "<br>" + this.desc);
+        var msg = this.name + "<br>" + this.desc;
+        if (this.linkedItems.length) {
+            var list = "<br>Встречается также:<br>";
+            for (var i in this.linkedItems) {
+                var it = this.linkedItems[i];
+                list += "<a href='" + it['link'] + "'>Ревизия: " + it['rev'] + ", cтр.: " + it['page_id'] + "</a><br>";
+            }
+            msg += list;
+        }
+        this.page.msgShow(this.rect.topLeft(), msg);
     }
 }
 
@@ -721,10 +731,10 @@ class Navigator extends SchematicPage {
         this.messageBox.style.display = 'block';
         this.messageBox.style.left = this.left() + point.toScaled(this.scale).x;
         this.messageBox.style.top = this.top() + point.toScaled(this.scale).y;
-        var f = function() {
+/*        var f = function() {
             this.msgHide();
         }
-        setTimeout(f.bind(this), 3000);
+        setTimeout(f.bind(this), 3000);*/
     }
 
     msgHide() {
@@ -927,10 +937,10 @@ class Editor extends SchematicPage {
         }
 
         var dataIndexLine = this.indexLine.serialize();
-        if (!dataIndexLine) {
+/*        if (!dataIndexLine) {
             this.msgErr("Index line is not set");
             return;
-        }
+        }*/
 
         var f = function (data) {
             var ret;
@@ -945,7 +955,7 @@ class Editor extends SchematicPage {
                  {'mod': 'page',
                   'id': this.id,
                   'areas': JSON.stringify(dataAreas),
-                  'index_line': JSON.stringify(dataIndexLine),
+                  'index_line': dataIndexLine ? JSON.stringify(dataIndexLine) : "",
                  },
                  f.bind(this), true);
     }

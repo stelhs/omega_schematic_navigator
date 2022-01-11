@@ -182,7 +182,9 @@ class Mod_page extends Module {
 
             $page_id = $args['id'];
             $areas = json_decode($args['areas'], true);
-            $index_line = json_decode($args['index_line'], true);
+            $index_line = NULL;
+            if ($args['index_line'])
+                $index_line = json_decode($args['index_line'], true);
             list($result, $reason) = $this->save($page_id, $areas, $index_line);
             echo json_encode(['result' => $result,
                               'reason' => $reason]);

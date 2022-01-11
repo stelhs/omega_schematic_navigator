@@ -60,12 +60,43 @@ class Item {
         return "";
     }
 
+    function linked_items() {
+        $rows = db()->query_list('select * from items ' .
+                            'where name = "%s" and id != %d',
+                            $this->name, $this->id);
+        if ($rows < 0 or count($rows) < 1)
+            return NULL;
+
+        $list = [];
+        foreach ($rows as $row) {
+            $page = page_by_id($row['page_id']);
+            $item = new Item($page, new Rect($row['rect_left'], $row['rect_top'],
+                                             $row['rect_width'], $row['rect_height']),
+                                             $row['name'], $row['id']);
+            $list[] = $item;
+        }
+        return $list;
+    }
+
     function serialize_as_arr() {
+        $linked_items = [];
+
+        $items = $this->linked_items();
+        if ($items)
+            foreach ($items as $item) {
+                $linked_items[] = ['page_id' => $item->page->id,
+                                   'rev' => $item->page->rev,
+                                   'link' => mk_link(['mod' => 'page',
+                                                      'id' => $item->page->id,
+                                                      'item' => $item->id])];
+            }
+
         return ['page_id' => $this->page->id,
                 'rect' => $this->rect->serialize_as_arr(),
                 'name' => $this->name,
                 'id' => $this->id,
-                'description' => $this->description()];
+                'description' => $this->description(),
+                'linked_items' => $linked_items];
     }
 }
 
