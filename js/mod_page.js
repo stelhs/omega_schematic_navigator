@@ -407,6 +407,10 @@ class SchematicPage {
         o.destroy();
     }
 
+    update() {
+        this.setWidth(this.width());
+    }
+
     setWidth(w) {
         this.scale = w / this.origWidth;
         this.schImg.style.width = w;

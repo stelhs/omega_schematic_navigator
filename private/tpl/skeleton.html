@@ -22,17 +22,102 @@
         <!-- END BLOCK : user_login -->
         <a href="{link_pages}" style="color: orange"> Схемы </a> |
         <a href="{link_index}" style="color: orange"> Индекс </a> |
+        <a href="{link_layout}" style="color: orange"> Компоновка </a> |
         <div style="display: inline-block">
             <form name="search_form" method="GET" action="{search_url}" id="main_search_form">
                 <input type="text" name="search" size="12" value="{text}" autofocus>
                 <input type="hidden" name="mod" value="search">
 
-                <a href="javascript:;" onclick="search_form.submit();">
+                <a href="javascript:;" onclick="search_form.submit();" title="искать">
                     <img src="{http_img}search_mini.png" style="vertical-align: middle">
                 </a>
             </form>
         </div>
+        <div style="display: inline-block" title="инструкция">
+            <a href="javascript:;" onclick="show_view('help_block'); schematic.update();">
+                <img src="{http_img}help.png" style="vertical-align: middle">
+            </a>
+        </div>
         <hr>
+
+        <div id="help_block" style="display: none; " align="center">
+            <div style="display: block; border: solid 2px green; width: max-content; padding: 10px">
+                <div align="right">
+                    <a href="javascript:;" onclick="hide_view('help_block'); schematic.update();">Закрыть инструкцию</a>
+
+                </div>
+
+                <h3>Инструкция</h3>
+                <div align="left" style="width: max-content;">
+                    Схемы взяты с книги "Издательство Третий Рим. Схемы электрооборудовнаия автомобилей Opel Omega"
+                    (<a href="{http_root}/docs/omega_book.pdf" target="_blank">ссылка на книгу</a>).<br>
+                    Всего 53 страницы схем. Страницы с 1 по 22 относятся к дорестайлинговой версии и с 23 по 53 относятся к рестайлингу.<br>
+                    Страница 54 отражает компоновку некоторых реле в кузове автомобиля (достпна в разделе "Компановка").
+                    <br><br>
+                </div>
+
+                <h3>Поиск</h3>
+                <div align="left" style="width: max-content;">
+                    Вверху окна есть поле ввода для поиска по ключевому слову. Поиск осуществляется<br>
+                    как по имени компонента например "S1" так и по его текстовому описанию, <br>
+                    посути по любому слову упоминаемому в описании к схемам.<br>
+                    В результатах к поиску будет предложено отразить результаты:<br>
+                    только по дорестайлингу (first) или рестайлингу (restyle) или оба варианта (all).
+                    <br><br>
+
+                    <div align="left" style="width: max-content;">
+                        <b>В окно поиска также можно вводить:</b>
+                        <ul style="width: max-content;">
+                            <li>цифра от 1 до 54 будет воспринята как номер страницы.<br>
+                                Перекинет на указанный номер страницы.
+                            </li>
+                            <li>цифра от 100 до 1199 будет воспринята как индекс дорестайлинговой схемы.<br>
+                                Перекинет непосредственно на указанный индекс в дорестайлинге.
+                            </li>
+                            <li>цифра от _100 до _1699 будет воспринята как индекс рестайлинговой схемы.<br>
+                                Перекинет непосредственно на указанный индекс в рестайлинге.<br>
+                                (тоесть перед цифрой должен стоять симфол подчёркивнаия. Например: "_1285")
+                            </li>
+                        </ul>
+                    </div>
+                    <br><br>
+                </div>
+
+                <h3>Навигация</h3>
+                <div align="left" style="width: max-content;">
+                    При нажатии на схемный разрыв <img src="{http_img}example1.png" width="40" style="vertical-align: middle">
+                    будет осуществлён переход на его противоположный конец.<br>
+                    Для возврата назад можно нажать кнопку "назад" в окне браузера <img src="{http_img}example2.png" width="40" style="vertical-align: middle"><br>
+                    Если подвести курсор мыши к схемному разрыву то будет выведена информация<br>
+                    о том куда уходит противополодный конец линии.
+                    <img src="{http_img}example4.png" style="vertical-align: middle"><br>
+                    Если нажать на компонент в схеме, то будет выведена информация о компоненте<br>
+                    и о его упоминании в других страницах схемы ввиде ссылок на них.
+                    <img src="{http_img}example3.png" width="300" style="vertical-align: middle"><br>
+                    Для масштабирования схемы доступны клавиши
+                    <img src="{http_img}example5.png" style="vertical-align: middle">
+                    также можно пользоваться клавишами '+' '-' на клавиатуре.<br>
+                    Клавиша '*' возвращает масштаб в исходное положение. Клавиша '/' переключает масштаб "пиксель в пиксель"<br>
+                    <br>
+
+                    <br><br>
+                </div>
+
+                <h3>Индекс</h3>
+                <div align="left" style="width: max-content;">
+                    В разеде "Индекс" перечислены все схемные блоки входящие в состав схемы.<br>
+                    По клику будет осуществлён переход на начало схемного блока.
+                    <br><br>
+                </div>
+
+                <h3>О проекте</h3>
+                <div align="left" style="width: max-content;">
+                    Наболело! Устал листать бумагу. Исходники проекта доступны
+                    <a href="https://github.com/stelhs/omega_schematic_navigator" target="_blank">здесь</a>.
+                    <br><br>
+                </div>
+            </div>
+        </div>
 
         <!-- START INSERT : message_boxes.html --> <!-- END INSERT : message_boxes.html -->
 
