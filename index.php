@@ -18,7 +18,7 @@ function main($tpl)
 
     $tpl->assign(NULL, ['link_pages' => mk_link(['mod' => 'page']),
                         'link_index' => mk_link(['mod' => 'index']),
-                        'link_layout' => mk_link(['mod' => 'page', 'id' => 54]),
+                        'link_layout' => mk_link(['mod' => 'page', 'id' => 55]),
                         'search_url' => mk_link(['mod' => 'search']),
                         ]);
 

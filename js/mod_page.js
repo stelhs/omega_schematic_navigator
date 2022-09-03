@@ -628,7 +628,7 @@ class Navigator extends SchematicPage {
             }
 
             if (this.needToHighligntLinkPoint) {
-                var lp = this.linkPointByTo(this.needToHighligntLinkPoint[0]);
+                var lp = this.linkPointByRoute(this.needToHighligntLinkPoint[0], this.needToHighligntLinkPoint[1]);
                 if (lp)
                     this.showLinkPointSelector(lp);
                 else {
@@ -711,10 +711,10 @@ class Navigator extends SchematicPage {
         this.linkPointSelector = NaN;
     }
 
-    linkPointByTo(to) {
+    linkPointByRoute(to, from) {
         for (var i in this.linkPoints) {
             var lp = this.linkPoints[i];
-            if (lp.to == to)
+            if (lp.to == to && lp.from == from)
                 return lp;
         }
         return NaN;
