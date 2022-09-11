@@ -559,9 +559,23 @@ class SchematicItem {
         var msg = this.name + "<br>" + this.desc;
         if (this.linkedItems.length) {
             var list = "<br>Встречается также:<br>";
+            var layoutFound = false;
             for (var i in this.linkedItems) {
                 var it = this.linkedItems[i];
-                list += "<a href='" + it['link'] + "'>Ревизия: " + it['rev'] + ", cтр.: " + it['page_id'] + "</a><br>";
+                if (it['rev'] != 'all')
+                    continue;
+                list += "<a href='" + it['link'] + "'>Компоновка c." + it['page_id'] + "</a><br>";
+                layoutFound = true;
+            }
+
+            if (layoutFound)
+                list += "---<br>";
+
+            for (var i in this.linkedItems) {
+                var it = this.linkedItems[i];
+                if (it['rev'] == 'all')
+                    continue;
+                list += "<a href='" + it['link'] + "'>" + it['rev'] + ", c." + it['page_id'] + "</a><br>";
             }
             msg += list;
         }
