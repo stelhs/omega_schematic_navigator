@@ -6,7 +6,8 @@ class Mod_search extends Module {
     function content($args = []) {
         $tpl = tpl("mod_search.html");
         $search_text = isset($args['search']) ? $args['search'] : NULL;
-        $rev = isset($args['rev']) ? $args['rev'] : 'first';
+        $rev = isset($args['rev']) ? $args['rev'] : 'all';
+        $layout_only = $args['layout_only'] == 1 ? TRUE : FALSE;
 
         preg_match("/^\d+$/", $search_text, $m);
         if (count($m) > 0) {
@@ -36,7 +37,8 @@ class Mod_search extends Module {
 
         $tpl->assign(0, ['form_url' => mk_link(['mod' => 'page']),
                          'mod' => 'search',
-                         'search_text' => $search_text]);
+                         'search_text' => $search_text,
+                         'layout_only_checkded' => ($layout_only ? 'CHECKED' : '')]);
 
         $revs = ['all', 'first', 'restyle'];
         foreach ($revs as $r) {
@@ -50,14 +52,21 @@ class Mod_search extends Module {
             return $tpl->result();
         }
 
-        $items = $this->search_by_item_name($search_text, $rev);
+        $exact = FALSE;
+        if ($search_text[strlen($search_text) - 1] == '\\') {
+            $search_text = str_replace('\\', '', $search_text);
+            $exact = TRUE;
+        }
 
-        $list = $this->search_by_item_description($search_text, $rev);
+
+        $items = $this->search_by_item_name($search_text, $rev, $exact, $layout_only);
+
+        $list = $this->search_by_item_description($search_text, $rev, $exact, $layout_only);
         if ($list)
             foreach ($list as $item)
                 $items[] = $item;
 
-        $index_list = $this->search_by_index($search_text, $rev);
+        $index_list = $this->search_by_index($search_text, $rev, $exact);
         if (!$items and !$index_list) {
             $tpl->assign("not_found");
             return $tpl->result();
@@ -65,7 +74,13 @@ class Mod_search extends Module {
 
         $tpl->assign("found");
         foreach ($items as $item) {
+            $index = '';
+            $idx = $item->index_num();
+            if ($idx)
+                $index = index_description($item->page->rev, $idx);
+
             $tpl->assign("item", ['page_id' => $item->page->id,
+                                  'index' => $index,
                                   'name' => $item->name,
                                   'description' => $item->description(),
                                   'link' => mk_link(['mod' => 'page',
@@ -110,9 +125,11 @@ class Mod_search extends Module {
         return $items;
     }
 
-    function search_by_item_name($text, $rev = 'all') {
-        if ($rev == 'all')
-            return $this->items_by_query('select * from items where name like "%%%s%%"', $text);
+    function search_by_item_name($text, $rev = 'all', $exact = FALSE, $layout_only = FALSE) {
+        $condition = $exact == FALSE ? sprintf('"%%%s%%"', $text) : sprintf('"%s"', $text);
+        $layout_only_condition = $layout_only == FALSE ? '' : ' and pages.index_start = 0 ';
+        $rev_condition = $rev == 'all' ? '' : sprintf(' and pages.rev = "%s" ', $rev);
+
         return $this->items_by_query('select ' .
                                      'items.id as id, ' .
                                      'items.name as name, ' .
@@ -123,25 +140,21 @@ class Mod_search extends Module {
                                      'items.rect_height as rect_height ' .
                                      'from items ' .
                                      'left join pages on pages.id = items.page_id ' .
-                                     'where items.name like "%%%s%%" and pages.rev = "%s"',
-                                     $text, $rev);
+                                     'where items.name like %s %s %s',
+                                     $condition, $rev_condition, $layout_only_condition);
     }
 
 
-    function search_by_item_description($text, $rev = 'all') {
-        $rows = db()->query_list('select * from legend where description like "%%%s%%"', $text);
+    function search_by_item_description($text, $rev = 'all', $exact = FALSE, $layout_only = FALSE) {
+        $condition = $exact == FALSE ? sprintf('"%%%s%%"', $text) : sprintf('"%s"', $text);
+        $layout_only_condition = $layout_only == FALSE ? '' : ' and pages.index_start = 0 ';
+        $rev_condition = $rev == 'all' ? '' : sprintf(' and pages.rev = "%s" ', $rev);
+        $rows = db()->query_list('select * from legend where description like %s', $condition);
         if ($rows < 0 or count($rows) < 1)
             return [];
 
         $items = [];
         foreach ($rows as $row) {
-            if ($rev == 'all') {
-                $sublist = $this->items_by_query('select * from items where name = "%s"', $row['name']);
-                foreach ($sublist as $item)
-                    $items[] = $item;
-                continue;
-            }
-
             $sublist = $this->items_by_query('select ' .
                                              'items.id as id, ' .
                                              'items.name as name, ' .
@@ -152,8 +165,8 @@ class Mod_search extends Module {
                                              'items.rect_height as rect_height ' .
                                              'from items ' .
                                              'left join pages on pages.id = items.page_id ' .
-                                             'where name = "%s" and pages.rev = "%s"',
-                                             $row['name'], $rev);
+                                             'where name = "%s" %s %s',
+                                             $row['name'], $rev_condition, $layout_only_condition);
             foreach ($sublist as $item)
                 $items[] = $item;
 
@@ -161,10 +174,11 @@ class Mod_search extends Module {
         return $items;
     }
 
-    function search_by_index($text, $rev) {
+    function search_by_index($text, $rev, $exact = FALSE) {
+        $condition = $exact == FALSE ? sprintf('"%%%s%%"', $text) : sprintf('"%s"', $text);
         if ($rev == 'all') {
             $rows = db()->query_list('select * from index_line ' .
-                                     'where name like "%%%s%%"', $text);
+                                     'where name like %s', $condition);
             if ($rows < 0 or count($rows) < 1)
                 return [];
             return $rows;
@@ -172,8 +186,8 @@ class Mod_search extends Module {
 
 
         $rows = db()->query_list('select * from index_line ' .
-                                 'where name like "%%%s%%" and rev = "%s"',
-                                 $text, $rev);
+                                 'where name like %s and rev = "%s"',
+                                 $condition, $rev);
         if ($rows < 0 or count($rows) < 1)
             return [];
         return $rows;

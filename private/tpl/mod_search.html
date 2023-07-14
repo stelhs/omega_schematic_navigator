@@ -22,6 +22,12 @@
                 </td>
             </tr>
             <tr>
+                <td></td>
+                <td>
+                    <input type="checkbox" name="layout_only" value="1" {layout_only_checkded}> искать только в компоновке
+                </td>
+            </tr>
+            <tr>
                 <td colspan=2>
                     <input class="buttonSend" type="submit" value="Искать"/>
                 </td>
@@ -40,7 +46,10 @@
                 padding-left: 50px;
                 padding-bottom: 50px">
         <!-- START BLOCK : item -->
-            <a href="{link}">Страница {page_id}: {name} - {description}</a><br>
+            <a href="{link}">
+                Стр. {page_id}, <span style="color: #0DD">{index}</span>: <span style="color: #0D0">{name}</span> - {description}
+            </a>
+            <br>
         <!-- END BLOCK : item -->
         <br>
         <br>

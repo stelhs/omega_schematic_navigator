@@ -78,6 +78,10 @@ class Item {
         return $list;
     }
 
+    function index_num() {
+        return $this->page->index_by_coordinate($this->rect->left + ($this->rect->right - $this->rect->left) / 2);
+    }
+
     function serialize_as_arr() {
         $linked_items = [];
 
@@ -253,6 +257,13 @@ class Page {
         return ['ok', $list];
     }
 
+    function index_by_coordinate($x)
+    {
+        if (!$this->idx_start)
+            return NULL;
+        return ceil((($x - $this->offset) / $this->step) + $this->idx_start);
+    }
+
 
 }
 
@@ -272,12 +283,17 @@ function page_by_index($rev, $idx) {
 }
 
 function page_by_id($id) {
-    $row = db()->query("select * from pages " .
-                       "where id = %d",
-                           $id);
-    if (!$row)
-        return NULL;
-    return new Page($row);
+    static $pages = NULL;
+    if (!$pages) {
+        $pages = [];
+        $rows = db()->query_list("select * from pages");
+        foreach ($rows as $row)
+            $pages[$row['id']] = new Page($row);
+    }
+
+    if (isset($pages[$id]))
+        return $pages[$id];
+    return NULL;
 }
 
 function index_list($rev) {
