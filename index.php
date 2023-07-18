@@ -31,9 +31,12 @@ function main($tpl)
     if (!$user) {
         $tpl->assign('user_login',
                     ['link_login' => mk_link(['login' => '1'])]);
-    } else
+    } else {
         $tpl->assign('user_logout',
                     ['link_logout' => mk_query(['method' => 'user_logout'])]);
+        $tpl->assign('user_notes',
+                    ['link_notes' => mk_link(['mod' => 'notes'])]);
+    }
 
     $mod_name = "page";
     if(isset($_GET['mod']))
